@@ -15,6 +15,12 @@ import (
 	"github.com/GoLessons/sufir-keeper-client/internal/logging"
 )
 
+type tempNetErr struct{}
+
+func (tempNetErr) Error() string   { return "temp" }
+func (tempNetErr) Timeout() bool   { return true }
+func (tempNetErr) Temporary() bool { return true }
+
 func TestCheckRetryBranches(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -45,10 +51,6 @@ func TestCheckRetryBranches(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, ok)
 
-	type tempNetErr struct{}
-	func (tempNetErr) Error() string   { return "temp" }
-	func (tempNetErr) Timeout() bool   { return true }
-	func (tempNetErr) Temporary() bool { return true }
 	ok, err = client.CheckRetry(context.Background(), nil, tempNetErr{})
 	require.NoError(t, err)
 	require.True(t, ok)

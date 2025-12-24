@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
@@ -35,9 +36,8 @@ func TestLogoutWithoutAccessToken(t *testing.T) {
 	store, err := NewKeyringStore(KeyringOptions{ServiceName: "sufir-keeper-client", Backend: "file", FileDir: t.TempDir()})
 	require.NoError(t, err)
 	mgr := NewManager(rc, store)
-	err = mgr.Logout(rc.HTTPClient.Context(), cfg.Server.BaseURL)
+	err = mgr.Logout(context.Background(), cfg.Server.BaseURL)
 	require.NoError(t, err)
 	_, ok := store.CurrentAccessToken()
 	require.False(t, ok)
 }
-
