@@ -28,7 +28,7 @@ jobs:
       - name: Configure Go flags
         run: echo "GOFLAGS=-buildvcs=false" >> $GITHUB_ENV
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: v2.7.2
           args: --config tools/.golangci-lint.yml --timeout 3m
