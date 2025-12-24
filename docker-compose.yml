@@ -1,0 +1,19 @@
+services:
+  go:
+    build:
+      context: .
+      dockerfile: .docker/go/Dockerfile
+    container_name: sufir-keeper-client-go
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+      - ./var:/workspace/var
+    tty: true
+    stdin_open: true
+    command: ["bash", "-lc", "sleep infinity"]
+
+volumes:
+  go-mod-cache: {}
+  go-build-cache: {}
