@@ -1,8 +1,18 @@
 package main
 
-import "github.com/GoLessons/sufir-keeper-server/internal/cli"
+import (
+	"os"
+
+	"github.com/GoLessons/sufir-keeper-client/internal/buildinfo"
+	"github.com/GoLessons/sufir-keeper-client/internal/cli"
+)
 
 func main() {
-	app := cli.NewRootCmd()
-	app.Execute()
+	buildinfo.Ensure()
+	version, commit, date := buildinfo.Info()
+
+	app := cli.NewRootCmd(version, commit, date)
+	if err := app.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
