@@ -2,21 +2,25 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/GoLessons/sufir-keeper-server/internal/config"
-	"github.com/GoLessons/sufir-keeper-server/internal/logging"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/GoLessons/sufir-keeper-client/internal/config"
+	"github.com/GoLessons/sufir-keeper-client/internal/logging"
 )
 
 type contextKey string
 
-const cfgContextKey contextKey = "config"
-const logContextKey contextKey = "logger"
+const (
+	cfgContextKey contextKey = "config"
+	logContextKey contextKey = "logger"
+)
 
-func NewRootCmd() *cobra.Command {
+func NewRootCmd(version, commit, date string) *cobra.Command {
 	v := viper.New()
 	v.SetEnvPrefix("SUFIR_KEEPER")
 	v.SetEnvKeyReplacer(config.EnvKeyReplacer())
@@ -56,6 +60,10 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
+	if version != "" {
+		cmd.Version = version
+	}
+
 	cmd.PersistentFlags().String("config", "", "Путь к файлу конфигурации")
 	cmd.PersistentFlags().String("server", "", "Адрес сервера API")
 	cmd.PersistentFlags().String("log-level", "", "Уровень логирования")
@@ -65,6 +73,26 @@ func NewRootCmd() *cobra.Command {
 	_ = v.BindPFlag("server.base_url", cmd.PersistentFlags().Lookup("server"))
 	_ = v.BindPFlag("log.level", cmd.PersistentFlags().Lookup("log-level"))
 	_ = v.BindPFlag("tls.ca_cert_path", cmd.PersistentFlags().Lookup("ca-cert-path"))
-	
+
+	if version != "" || commit != "" || date != "" {
+		versionCmd := &cobra.Command{
+			Use:   "version",
+			Short: "Показать версию приложения",
+			RunE: func(c *cobra.Command, args []string) error {
+				out := fmt.Sprintf("version: %s\ncommit: %s\ndate: %s\n", nonEmpty(version, "dev"), nonEmpty(commit, "none"), nonEmpty(date, "unknown"))
+				_, err := c.OutOrStdout().Write([]byte(out))
+				return err
+			},
+		}
+		cmd.AddCommand(versionCmd)
+	}
+
 	return cmd
+}
+
+func nonEmpty(value, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+	return value
 }

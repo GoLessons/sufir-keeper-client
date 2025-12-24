@@ -3,13 +3,16 @@ package cli
 import (
 	"context"
 	"testing"
+	"time"
 
-	"github.com/GoLessons/sufir-keeper-server/internal/config"
 	"github.com/stretchr/testify/require"
+
+	"github.com/GoLessons/sufir-keeper-client/internal/config"
 )
 
 func TestNewRootCmdConfigFlow(t *testing.T) {
-	cmd := NewRootCmd()
+	now := time.Now()
+	cmd := NewRootCmd("dev", "unknown", now.Format("2006-01-02"))
 	cmd.SetArgs([]string{
 		"--config", "/workspace/var/config.yaml",
 		"--server", "https://localhost:8443/api/v1",

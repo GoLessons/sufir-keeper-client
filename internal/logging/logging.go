@@ -65,6 +65,6 @@ func NewLogger(level string) (Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &zapLogger{Logger: z}, nil
 }

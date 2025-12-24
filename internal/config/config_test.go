@@ -3,9 +3,9 @@ package config
 import (
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/spf13/viper"
 )
 
 func TestEnvKeyReplacer(t *testing.T) {

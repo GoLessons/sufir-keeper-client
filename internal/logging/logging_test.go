@@ -31,3 +31,12 @@ func TestNewLoggerLevels(t *testing.T) {
 		})
 	}
 }
+
+func TestLoggerWrappers(t *testing.T) {
+	l, err := NewLogger("debug")
+	require.NoError(t, err)
+	l.Debug("debug message")
+	l.Info("info message")
+	l.Warn("warn message")
+	l.Error("error message")
+}

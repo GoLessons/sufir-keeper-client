@@ -1,0 +1,123 @@
+version: 2
+
+project_name: keepcli
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: keepcli
+    main: ./cmd/keepcli
+    binary: keepcli
+
+    env:
+      - CGO_ENABLED=0
+
+    goos:
+      - linux
+      - darwin
+      - windows
+
+    goarch:
+      - amd64
+      - arm64
+
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+    ldflags:
+      - -s -w
+      - -X github.com/GoLessons/sufir-keeper-client/internal/buildinfo.version={{ .Version }}
+      - -X github.com/GoLessons/sufir-keeper-client/internal/buildinfo.commit={{ .Commit }}
+      - -X github.com/GoLessons/sufir-keeper-client/internal/buildinfo.date={{ .Date }}
+
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{ .Version }}_
+      {{ .Os }}_
+      {{ .Arch }}
+
+    format_overrides:
+      - goos: windows
+        format: zip
+
+    files:
+      - LICENSE
+      - README.md
+      - completions/*
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  github:
+    owner: GoLessons
+    name: sufir-keeper-client
+
+  draft: false
+  prerelease: auto
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+
+signs:
+  - cmd: cosign
+    args:
+      - sign-blob
+      - "--yes"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+    artifacts: checksum
+    stdin: true
+
+snapshots:
+  name_template: "{{ .Version }}-next"
+
+brews:
+  - name: keepcli
+    homepage: https://github.com/your-org/keepcli
+    description: "CLI client for My API"
+    license: MIT
+
+    repository:
+      owner: your-org
+      name: homebrew-tap
+
+    install: |
+      bin.install "keepcli"
+
+nfpms:
+  - id: packages
+    package_name: keepcli
+    homepage: https://github.com/your-org/keepcli
+    description: CLI client for My API
+    license: MIT
+
+    formats:
+      - deb
+      - rpm
+
+    maintainer: Your Name <you@example.com>
+
+    contents:
+      - src: completions/keepcli.bash
+        dst: /etc/bash_completion.d/keepcli
+      - src: completions/keepcli.zsh
+        dst: /usr/share/zsh/site-functions/_keepcli
+      - src: completions/keepcli.fish
+        dst: /usr/share/fish/vendor_completions.d/keepcli.fish
