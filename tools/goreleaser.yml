@@ -85,7 +85,7 @@ signs:
     artifacts: checksum
     stdin: true
 
-snapshots:
+snapshot:
   name_template: "{{ .Version }}-next"
 
 brews:
