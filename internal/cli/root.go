@@ -32,16 +32,18 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			homeDir, err := os.UserHomeDir()
+			executablePath, err := os.Executable()
 			if err != nil {
 				return err
 			}
+			execDir := filepath.Dir(executablePath)
 			if !v.IsSet("config.file") || v.GetString("config.file") == "" {
-				v.Set("config.file", filepath.Join(homeDir, ".config", "keepcli", "config.yaml"))
+				v.Set("config.file", filepath.Join(execDir, "config.json"))
 			}
 			v.SetConfigFile(v.GetString("config.file"))
 			v.SetDefault("server.base_url", "https://localhost:8443/api/v1")
 			v.SetDefault("log.level", "info")
+			v.SetDefault("tls.ca_cert_path", "./var/ca.crt")
 			var cfg config.Config
 			if err := config.Load(v, &cfg); err != nil {
 				return err
