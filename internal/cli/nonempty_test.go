@@ -10,4 +10,3 @@ func TestNonEmpty(t *testing.T) {
 		t.Fatalf("value not applied")
 	}
 }
-

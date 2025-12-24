@@ -20,16 +20,17 @@ type KeyringStore struct {
 	serviceName string
 	accessKey   string
 	refreshKey  string
-	mu          sync.Mutex
 	cached      AuthTokens
+	mu          sync.Mutex
 }
 
 type KeyringOptions struct {
-	ServiceName string
-	Backend     string
-	FileDir     string
-	AccessKey   string
-	RefreshKey  string
+	ServiceName  string
+	Backend      string
+	FileDir      string
+	AccessKey    string
+	RefreshKey   string
+	FilePassword string
 }
 
 func NewKeyringStore(opts KeyringOptions) (*KeyringStore, error) {
@@ -39,6 +40,11 @@ func NewKeyringStore(opts KeyringOptions) (*KeyringStore, error) {
 	if opts.Backend == "file" {
 		cfg.AllowedBackends = []keyring.BackendType{keyring.FileBackend}
 		cfg.FileDir = opts.FileDir
+		pass := opts.FilePassword
+		if pass == "" {
+			pass = "sufir-keeper-dev"
+		}
+		cfg.FilePasswordFunc = func(prompt string) (string, error) { return pass, nil }
 	}
 	r, err := keyring.Open(cfg)
 	if err != nil {
@@ -133,4 +139,3 @@ func (s *KeyringStore) HasRefreshToken() bool {
 	_, err := s.ring.Get(s.refreshKey)
 	return err == nil
 }
-

@@ -5,16 +5,18 @@ import (
 )
 
 func TestValidateFailsOnDefaults(t *testing.T) {
+	const unknown = "unknown"
 	version = "dev"
-	date = "unknown"
+	date = unknown
 	if err := Validate(); err == nil {
 		t.Fatalf("expected error on defaults")
 	}
 }
 
 func TestValidateFailsOnUnknownDate(t *testing.T) {
+	const unknown = "unknown"
 	version = "vX"
-	date = "unknown"
+	date = unknown
 	if err := Validate(); err == nil {
 		t.Fatalf("expected error on unknown date")
 	}

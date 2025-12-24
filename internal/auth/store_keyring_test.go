@@ -11,11 +11,12 @@ import (
 func TestKeyringStoreSaveLoadClear(t *testing.T) {
 	dir := t.TempDir()
 	opts := KeyringOptions{
-		ServiceName: "sufir-keeper-client",
-		Backend:     "file",
-		FileDir:     filepath.Join(dir, "keyring"),
-		AccessKey:   "access_token",
-		RefreshKey:  "refresh_token",
+		ServiceName:  "sufir-keeper-client",
+		Backend:      "file",
+		FileDir:      filepath.Join(dir, "keyring"),
+		FilePassword: "test",
+		AccessKey:    "access_token",
+		RefreshKey:   "refresh_token",
 	}
 	store, err := NewKeyringStore(opts)
 	require.NoError(t, err)
@@ -41,4 +42,3 @@ func TestKeyringStoreSaveLoadClear(t *testing.T) {
 	require.Error(t, err)
 	_ = os.RemoveAll(opts.FileDir)
 }
-

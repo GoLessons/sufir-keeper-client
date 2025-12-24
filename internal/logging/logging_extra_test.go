@@ -10,4 +10,3 @@ func TestUnknownLogLevel(t *testing.T) {
 	_, err := NewLogger("trace")
 	require.Error(t, err)
 }
-

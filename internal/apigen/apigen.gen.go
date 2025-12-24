@@ -22,8 +22,8 @@ type AuthResponse struct {
 }
 
 type ClientWithResponses struct {
-	BaseURL    string
 	HTTPClient *http.Client
+	BaseURL    string
 }
 
 type ClientOption func(*ClientWithResponses)
@@ -41,4 +41,3 @@ func NewClientWithResponses(baseURL string, opts ...ClientOption) (*ClientWithRe
 	}
 	return c, nil
 }
-

@@ -35,4 +35,3 @@ func New(cfg config.Config, log logging.Logger, store auth.TokenStore) (*Client,
 		Auth: mgr,
 	}, nil
 }
-

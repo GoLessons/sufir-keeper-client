@@ -19,4 +19,3 @@ func Do(client *retryablehttp.Client, req *retryablehttp.Request) (*http.Respons
 	}
 	return resp, nil
 }
-

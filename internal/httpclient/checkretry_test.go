@@ -2,8 +2,8 @@ package httpclient
 
 import (
 	"context"
-	"io"
 	"encoding/pem"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"

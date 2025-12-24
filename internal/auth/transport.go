@@ -8,9 +8,9 @@ import (
 
 type AuthRoundTripper struct {
 	base    http.RoundTripper
+	store   TokenStore
 	manager *Manager
 	baseURL string
-	store   TokenStore
 }
 
 func NewAuthRoundTripper(base http.RoundTripper, manager *Manager, baseURL string, store TokenStore) *AuthRoundTripper {
@@ -62,4 +62,3 @@ func (t *AuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	}
 	return resp, nil
 }
-

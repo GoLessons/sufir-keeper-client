@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"sync"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"golang.org/x/sync/singleflight"
@@ -26,7 +25,6 @@ type Manager struct {
 	client *retryablehttp.Client
 	store  TokenStore
 	group  singleflight.Group
-	mu     sync.Mutex
 }
 
 func NewManager(client *retryablehttp.Client, store TokenStore) *Manager {

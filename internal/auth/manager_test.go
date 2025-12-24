@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -33,6 +32,7 @@ func writeServerCertToFile(t *testing.T, srv *httptest.Server) string {
 }
 
 func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
+	const pathAuth = "/auth"
 	var refreshCalls int64
 	var currentAccess string
 	var currentRefresh string
@@ -41,7 +41,7 @@ func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/register":
 			w.WriteHeader(http.StatusCreated)
-		case r.Method == http.MethodPost && r.URL.Path == "/auth":
+		case r.Method == http.MethodPost && r.URL.Path == pathAuth:
 			type loginBody struct {
 				Login    string `json:"login"`
 				Password string `json:"password"`
@@ -59,7 +59,7 @@ func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
 			currentRefresh = resp["refresh_token"].(string)
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(resp)
-		case r.Method == http.MethodPatch && r.URL.Path == "/auth":
+		case r.Method == http.MethodPatch && r.URL.Path == pathAuth:
 			atomic.AddInt64(&refreshCalls, 1)
 			type rb struct {
 				RefreshToken string `json:"refresh_token"`
@@ -81,7 +81,7 @@ func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
 			}
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(resp)
-		case r.Method == http.MethodDelete && r.URL.Path == "/auth":
+		case r.Method == http.MethodDelete && r.URL.Path == pathAuth:
 			if r.Header.Get("Authorization") == "Bearer "+currentAccess {
 				w.WriteHeader(http.StatusNoContent)
 				return
@@ -117,9 +117,10 @@ func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
 	require.NoError(t, err)
 	dir := t.TempDir()
 	store, err := NewKeyringStore(KeyringOptions{
-		ServiceName: "sufir-keeper-client",
-		Backend:     "file",
-		FileDir:     filepath.Join(dir, "keyring"),
+		ServiceName:  "sufir-keeper-client",
+		Backend:      "file",
+		FileDir:      filepath.Join(dir, "keyring"),
+		FilePassword: "test",
 	})
 	require.NoError(t, err)
 	mgr := NewManager(client, store)
@@ -144,6 +145,5 @@ func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
 }
 
 func contextWithTimeout() (ctx context.Context) {
-	c, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	return c
+	return context.Background()
 }

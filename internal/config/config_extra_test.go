@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadNilOut(t *testing.T) {
@@ -32,4 +32,3 @@ func TestAuthEnvFallback(t *testing.T) {
 	require.Equal(t, os.Getenv("SUFIR_KEEPER_CA_CERT"), cfg.TLS.CACertPath)
 	require.Equal(t, os.Getenv("SUFIR_KEEPER_LOG_LEVEL"), cfg.Log.Level)
 }
-

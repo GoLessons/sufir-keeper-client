@@ -10,4 +10,3 @@ type AuthTokens struct {
 type UserInfo struct {
 	UserID string
 }
-

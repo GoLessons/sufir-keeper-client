@@ -13,4 +13,3 @@ func TestRootPreRunInvalidLogLevel(t *testing.T) {
 		t.Fatalf("expected error due to invalid log level")
 	}
 }
-

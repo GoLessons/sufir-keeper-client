@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/pem"
 	"net/http"
@@ -17,11 +18,12 @@ import (
 )
 
 func TestTransportNoReplayOnBodyWithoutGetBody(t *testing.T) {
+	const pathAuth = "/auth"
 	var access string
 	var refresh string
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == http.MethodPost && r.URL.Path == "/auth":
+		case r.Method == http.MethodPost && r.URL.Path == pathAuth:
 			resp := map[string]any{
 				"access_token":  "acc",
 				"refresh_token": "ref",
@@ -32,7 +34,7 @@ func TestTransportNoReplayOnBodyWithoutGetBody(t *testing.T) {
 			refresh = "ref"
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(resp)
-		case r.Method == http.MethodPatch && r.URL.Path == "/auth":
+		case r.Method == http.MethodPatch && r.URL.Path == pathAuth:
 			type rb struct {
 				RefreshToken string `json:"refresh_token"`
 			}
@@ -77,11 +79,12 @@ func TestTransportNoReplayOnBodyWithoutGetBody(t *testing.T) {
 	cfg := config.Config{Server: config.ServerConfig{BaseURL: srv.URL}, TLS: config.TLSConfig{CACertPath: f.Name()}}
 	rc, err := httpclient.New(cfg, log)
 	require.NoError(t, err)
-	store, err := NewKeyringStore(KeyringOptions{ServiceName: "sufir-keeper-client", Backend: "file", FileDir: t.TempDir()})
+	store, err := NewKeyringStore(KeyringOptions{ServiceName: "sufir-keeper-client", Backend: "file", FileDir: t.TempDir(), FilePassword: "test"})
 	require.NoError(t, err)
 	mgr := NewManager(rc, store)
-	_, err = mgr.Login(rc.HTTPClient.Context(), cfg.Server.BaseURL, "u", "p")
+	_, err = mgr.Login(context.Background(), cfg.Server.BaseURL, "u", "p")
 	require.NoError(t, err)
+	_ = store.Clear()
 	rt := NewAuthRoundTripper(rc.HTTPClient.Transport, mgr, cfg.Server.BaseURL, store)
 	rc.HTTPClient.Transport = rt
 	// Body без GetBody
@@ -92,4 +95,3 @@ func TestTransportNoReplayOnBodyWithoutGetBody(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 }
-

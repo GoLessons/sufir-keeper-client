@@ -114,7 +114,7 @@ func TestOptionsApplied(t *testing.T) {
 			CACertPath: caPath,
 		},
 	}
-		client, err := New(
+	client, err := New(
 		cfg,
 		log,
 		WithTimeout(1*time.Second),
