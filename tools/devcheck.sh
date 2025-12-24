@@ -5,9 +5,7 @@ export GOFLAGS="-buildvcs=false"
 
 mkdir -p var
 
-if [ "${DEV_UPDATE_DEPS:-0}" = "1" ]; then
-  go get -u
-fi
+go get -u ./...
 go mod download
 go mod tidy
 
