@@ -21,5 +21,16 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Build keepcli
-        run: go build -v ./cmd/keepcli
+      - name: Prepare modules
+        run: |
+          go mod download
+          go mod tidy
+      - name: Configure Go flags
+        run: echo "GOFLAGS=-buildvcs=false" >> $GITHUB_ENV
+      - name: Build keepcli with ldflags
+        run: |
+          LDV_VERSION="$(git describe --tags --always 2>/dev/null || echo dev)"
+          LDV_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo none)"
+          LDV_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          go build -v -ldflags "-X github.com/GoLessons/sufir-keeper-client/internal/buildinfo.version=${LDV_VERSION} -X github.com/GoLessons/sufir-keeper-client/internal/buildinfo.commit=${LDV_COMMIT} -X github.com/GoLessons/sufir-keeper-client/internal/buildinfo.date=${LDV_DATE}" ./cmd/keepcli
+          ./keepcli --version

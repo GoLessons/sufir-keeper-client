@@ -7,7 +7,7 @@ import (
 )
 
 func TestVersionCommandOutput(t *testing.T) {
-	cmd := NewRootCmdWithVersion("1.2.3", "abc123", "2025-01-01T00:00:00Z")
+	cmd := NewRootCmd("1.2.3", "abc123", "2025-01-01T00:00:00Z")
 	var buf bytes.Buffer
 	cmd.SetOut(&buf)
 	cmd.SetArgs([]string{"version"})

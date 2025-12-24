@@ -21,6 +21,12 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Prepare modules
+        run: |
+          go mod download
+          go mod tidy
+      - name: Configure Go flags
+        run: echo "GOFLAGS=-buildvcs=false" >> $GITHUB_ENV
       - name: Install goimports
         run: go install golang.org/x/tools/cmd/goimports@v0.28.0
       - name: Check imports order

@@ -21,5 +21,11 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Prepare modules
+        run: |
+          go mod download
+          go mod tidy
+      - name: Configure Go flags
+        run: echo "GOFLAGS=-buildvcs=false" >> $GITHUB_ENV
       - name: Run go vet
         run: go vet ./...

@@ -59,7 +59,6 @@ func New(cfg config.Config, log logging.Logger, opts ...Option) (*retryablehttp.
 		return nil, errors.New("tls ca cert path required")
 	}
 	pem, err := os.ReadFile(cfg.TLS.CACertPath)
-
 	if err != nil {
 		return nil, err
 	}
