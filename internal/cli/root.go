@@ -44,6 +44,9 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 			v.SetDefault("server.base_url", "https://localhost:8443/api/v1")
 			v.SetDefault("log.level", "info")
 			v.SetDefault("tls.ca_cert_path", "./var/ca.crt")
+			v.SetDefault("auth.token_store_service", "sufir-keeper-client")
+			v.SetDefault("auth.backend", "")
+			v.SetDefault("auth.file_dir", "")
 			var cfg config.Config
 			if err := config.Load(v, &cfg); err != nil {
 				return err
@@ -75,6 +78,9 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 	_ = v.BindPFlag("server.base_url", cmd.PersistentFlags().Lookup("server"))
 	_ = v.BindPFlag("log.level", cmd.PersistentFlags().Lookup("log-level"))
 	_ = v.BindPFlag("tls.ca_cert_path", cmd.PersistentFlags().Lookup("ca-cert-path"))
+	_ = v.BindEnv("auth.token_store_service", "SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE")
+	_ = v.BindEnv("auth.backend", "SUFIR_KEEPER_AUTH_BACKEND")
+	_ = v.BindEnv("auth.file_dir", "SUFIR_KEEPER_AUTH_FILE_DIR")
 
 	if version != "" || commit != "" || date != "" {
 		versionCmd := &cobra.Command{

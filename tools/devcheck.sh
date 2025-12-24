@@ -27,6 +27,9 @@ go vet ./...
 golangci-lint run --config tools/.golangci-lint.yml --timeout 3m --fix ./...
 golangci-lint run --config tools/.golangci-lint.yml --timeout 3m ./...
 
+# Генерация клиента из OpenAPI
+oapi-codegen -config tools/oapi-codegen.yaml ./.trae/schema.yaml
+
 go test ./... -covermode=atomic -coverprofile=var/coverage.out
 go tool cover -func=var/coverage.out | tail -n 1
 go tool cover -html=var/coverage.out -o var/coverage.html

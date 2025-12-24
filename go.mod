@@ -3,11 +3,13 @@ module github.com/GoLessons/sufir-keeper-client
 go 1.25
 
 require (
+	github.com/99designs/keyring v1.2.2
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.27.1
+	golang.org/x/sync v0.19.0
 )
 
 require (
