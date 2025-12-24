@@ -10,6 +10,8 @@ import (
 
 	"github.com/hashicorp/go-retryablehttp"
 	"golang.org/x/sync/singleflight"
+
+	"github.com/GoLessons/sufir-keeper-client/internal/apigen"
 )
 
 type Authenticator interface {
@@ -32,7 +34,7 @@ func NewManager(client *retryablehttp.Client, store TokenStore) *Manager {
 }
 
 func (m *Manager) Register(ctx context.Context, baseURL, login, password string) error {
-	body := map[string]string{"login": login, "password": password}
+	body := apigen.UserRegister{Login: login, Password: password}
 	data, err := json.Marshal(body)
 	if err != nil {
 		return err
@@ -53,7 +55,7 @@ func (m *Manager) Register(ctx context.Context, baseURL, login, password string)
 }
 
 func (m *Manager) Login(ctx context.Context, baseURL, login, password string) (AuthTokens, error) {
-	body := map[string]string{"login": login, "password": password}
+	body := apigen.UserLogin{Login: login, Password: password}
 	data, err := json.Marshal(body)
 	if err != nil {
 		return AuthTokens{}, err
@@ -71,9 +73,15 @@ func (m *Manager) Login(ctx context.Context, baseURL, login, password string) (A
 		return AuthTokens{}, errors.New("login failed")
 	}
 	defer resp.Body.Close()
-	var tokens AuthTokens
-	if err := json.NewDecoder(resp.Body).Decode(&tokens); err != nil {
+	var ar apigen.AuthResponse
+	if err := json.NewDecoder(resp.Body).Decode(&ar); err != nil {
 		return AuthTokens{}, err
+	}
+	tokens := AuthTokens{
+		AccessToken:  ar.AccessToken,
+		RefreshToken: ar.RefreshToken,
+		TokenType:    ar.TokenType,
+		ExpiresIn:    ar.ExpiresIn,
 	}
 	if err := m.store.SaveTokens(tokens); err != nil {
 		return AuthTokens{}, err
@@ -90,7 +98,10 @@ func (m *Manager) Refresh(ctx context.Context, baseURL string) (AuthTokens, erro
 		if tokens.RefreshToken == "" {
 			return AuthTokens{}, errors.New("no refresh token")
 		}
-		body := map[string]string{"refresh_token": tokens.RefreshToken}
+		type rb struct {
+			RefreshToken string `json:"refresh_token"`
+		}
+		body := rb{RefreshToken: tokens.RefreshToken}
 		data, err := json.Marshal(body)
 		if err != nil {
 			return AuthTokens{}, err
@@ -108,9 +119,15 @@ func (m *Manager) Refresh(ctx context.Context, baseURL string) (AuthTokens, erro
 			return AuthTokens{}, errors.New("refresh failed")
 		}
 		defer resp.Body.Close()
-		var newTokens AuthTokens
-		if err := json.NewDecoder(resp.Body).Decode(&newTokens); err != nil {
+		var ar apigen.AuthResponse
+		if err := json.NewDecoder(resp.Body).Decode(&ar); err != nil {
 			return AuthTokens{}, err
+		}
+		newTokens := AuthTokens{
+			AccessToken:  ar.AccessToken,
+			RefreshToken: ar.RefreshToken,
+			TokenType:    ar.TokenType,
+			ExpiresIn:    ar.ExpiresIn,
 		}
 		if err := m.store.SaveTokens(newTokens); err != nil {
 			return AuthTokens{}, err
@@ -158,4 +175,3 @@ func (m *Manager) Verify(ctx context.Context, baseURL string) (UserInfo, error) 
 	}
 	return UserInfo{UserID: userID}, nil
 }
-
