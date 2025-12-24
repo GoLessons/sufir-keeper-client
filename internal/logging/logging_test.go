@@ -1,20 +1,33 @@
 package logging
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 func TestNewLoggerLevels(t *testing.T) {
-	levels := []string{"debug", "info", "warn", "error"}
-	for _, lv := range levels {
-		l, err := NewLogger(lv)
-		if err != nil {
-			t.Fatalf("unexpected error for level %s: %v", lv, err)
-		}
-		if l == nil {
-			t.Fatalf("nil logger for level %s", lv)
-		}
-		_ = l.Sync()
+	cases := []struct {
+		name      string
+		level     string
+		wantError bool
+	}{
+		{name: "debug", level: "debug"},
+		{name: "info", level: "info"},
+		{name: "warn", level: "warn"},
+		{name: "error", level: "error"},
+		{name: "unknown", level: "unknown", wantError: true},
 	}
-	if _, err := NewLogger("unknown"); err == nil {
-		t.Fatalf("expected error for unknown level")
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			l, err := NewLogger(tt.level)
+			if tt.wantError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, l)
+			_ = l.Sync()
+		})
 	}
 }

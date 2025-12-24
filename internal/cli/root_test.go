@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoLessons/sufir-keeper-server/internal/config"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewRootCmdConfigFlow(t *testing.T) {
@@ -15,28 +16,15 @@ func TestNewRootCmdConfigFlow(t *testing.T) {
 		"--log-level", "info",
 		"--ca-cert-path", "/workspace/var/ca.crt",
 	})
-	if err := cmd.ExecuteContext(context.Background()); err != nil {
-		t.Fatalf("execute error: %v", err)
-	}
+	err := cmd.ExecuteContext(context.Background())
+	require.NoError(t, err)
 	val := cmd.Context().Value(cfgContextKey)
-	if val == nil {
-		t.Fatalf("missing config in context")
-	}
+	require.NotNil(t, val)
 	cfg, ok := val.(config.Config)
-	if !ok {
-		t.Fatalf("unexpected config type")
-	}
-	if cfg.Server.BaseURL != "https://localhost:8443/api/v1" {
-		t.Fatalf("unexpected base url: %s", cfg.Server.BaseURL)
-	}
-	if cfg.TLS.CACertPath != "/workspace/var/ca.crt" {
-		t.Fatalf("unexpected ca cert path: %s", cfg.TLS.CACertPath)
-	}
-	if cfg.Log.Level != "info" {
-		t.Fatalf("unexpected log level: %s", cfg.Log.Level)
-	}
+	require.True(t, ok)
+	require.Equal(t, "https://localhost:8443/api/v1", cfg.Server.BaseURL)
+	require.Equal(t, "/workspace/var/ca.crt", cfg.TLS.CACertPath)
+	require.Equal(t, "info", cfg.Log.Level)
 	logVal := cmd.Context().Value(logContextKey)
-	if logVal == nil {
-		t.Fatalf("missing logger in context")
-	}
+	require.NotNil(t, logVal)
 }
