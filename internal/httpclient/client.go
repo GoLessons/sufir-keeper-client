@@ -111,17 +111,20 @@ func (l loggerAdapter) Printf(format string, v ...interface{}) {
 }
 
 func New(cfg config.Config, log logging.Logger, opts ...Option) (*retryablehttp.Client, error) {
-	if cfg.TLS.CACertPath == "" {
-		return nil, errors.New("tls ca cert path required")
+	var pool *x509.CertPool
+	var err error
+	pool, err = x509.SystemCertPool()
+	if err != nil || pool == nil {
+		pool = x509.NewCertPool()
 	}
-	pem, err := os.ReadFile(cfg.TLS.CACertPath)
-	if err != nil {
-		return nil, fmt.Errorf("read ca cert %s: %w", cfg.TLS.CACertPath, err)
-	}
-	pool := x509.NewCertPool()
-
-	if !pool.AppendCertsFromPEM(pem) {
-		return nil, fmt.Errorf("append ca cert failed for %s", cfg.TLS.CACertPath)
+	if cfg.TLS.CACertPath != "" {
+		pem, rerr := os.ReadFile(cfg.TLS.CACertPath)
+		if rerr != nil {
+			return nil, fmt.Errorf("read ca cert %s: %w", cfg.TLS.CACertPath, rerr)
+		}
+		if !pool.AppendCertsFromPEM(pem) {
+			return nil, fmt.Errorf("append ca cert failed for %s", cfg.TLS.CACertPath)
+		}
 	}
 	tlsCfg := &tls.Config{
 		MinVersion: tls.VersionTLS12,

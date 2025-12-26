@@ -4,7 +4,9 @@ go 1.25
 
 require (
 	github.com/99designs/keyring v1.2.2
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
+	github.com/oapi-codegen/runtime v1.1.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -14,6 +16,7 @@ require (
 
 require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dvsekhvalnov/jose2go v1.8.0 // indirect

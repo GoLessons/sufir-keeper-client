@@ -33,6 +33,7 @@ func writeServerCertToFile(t *testing.T, srv *httptest.Server) string {
 
 func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
 	const pathAuth = "/auth"
+	const pathProtected = "/protected"
 	var refreshCalls int64
 	var currentAccess string
 	var currentRefresh string
@@ -94,7 +95,7 @@ func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
 			}
 			w.Header().Set("X-User-Id", userID)
 			w.WriteHeader(http.StatusNoContent)
-		case r.Method == http.MethodGet && r.URL.Path == "/protected":
+		case r.Method == http.MethodGet && r.URL.Path == pathProtected:
 			if r.Header.Get("Authorization") != "Bearer "+currentAccess {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
@@ -135,7 +136,7 @@ func TestAuthFlowLoginRefreshVerifyLogout(t *testing.T) {
 	require.Equal(t, userID, info.UserID)
 	rt := NewAuthRoundTripper(client.HTTPClient.Transport, mgr, cfg.Server.BaseURL, store)
 	client.HTTPClient.Transport = rt
-	_, err = client.Get(srv.URL + "/protected")
+	_, err = client.Get(srv.URL + pathProtected)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, atomic.LoadInt64(&refreshCalls), int64(0))
 	err = mgr.Logout(contextWithTimeout(), cfg.Server.BaseURL)

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+
+	"github.com/GoLessons/sufir-keeper-client/internal/api/apiutil"
 )
 
 type AuthRoundTripper struct {
@@ -44,14 +46,14 @@ func (t *AuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 	if resp != nil && resp.StatusCode == http.StatusUnauthorized {
 		_, rerr := t.manager.Refresh(req.Context(), t.baseURL)
 		if rerr != nil {
-			return resp, nil
+			return resp, apiutil.Error{Status: http.StatusUnauthorized, Message: "refresh failed"}
 		}
 		nreq := req.Clone(req.Context())
 		if canReplay {
 			nreq.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		} else {
 			if req.Body != nil {
-				return resp, nil
+				return resp, apiutil.Error{Status: http.StatusUnauthorized, Message: "request body not replayable"}
 			}
 		}
 		access2, ok := t.store.CurrentAccessToken()

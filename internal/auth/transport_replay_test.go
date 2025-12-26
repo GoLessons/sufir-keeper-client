@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,13 +13,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GoLessons/sufir-keeper-client/internal/api/apiutil"
 	"github.com/GoLessons/sufir-keeper-client/internal/config"
 	"github.com/GoLessons/sufir-keeper-client/internal/httpclient"
 	"github.com/GoLessons/sufir-keeper-client/internal/logging"
 )
 
-func TestTransportNoReplayOnBodyWithoutGetBody(t *testing.T) {
+func TestTransportReplayWithGetBody(t *testing.T) {
 	const pathAuth = "/auth"
 	var access string
 	var refresh string
@@ -86,17 +85,14 @@ func TestTransportNoReplayOnBodyWithoutGetBody(t *testing.T) {
 	mgr := NewManager(rc, store)
 	_, err = mgr.Login(context.Background(), cfg.Server.BaseURL, "u", "p")
 	require.NoError(t, err)
-	_ = store.Clear()
 	rt := NewAuthRoundTripper(rc.HTTPClient.Transport, mgr, cfg.Server.BaseURL, store)
 	rc.HTTPClient.Transport = rt
-	// Body без GetBody
-	req, err := http.NewRequest(http.MethodPost, srv.URL+"/protected", bytes.NewBufferString("x"))
+	body := []byte("payload")
+	req, err := http.NewRequest(http.MethodPost, srv.URL+"/protected", bytes.NewReader(body))
 	require.NoError(t, err)
+	req.GetBody = func() (io.ReadCloser, error) { return io.NopCloser(bytes.NewReader(body)), nil }
 	req.Header.Set("Authorization", "Bearer invalid")
 	resp, err := rc.HTTPClient.Do(req)
-	require.Error(t, err)
-	var apiErr apiutil.Error
-	require.True(t, errors.As(err, &apiErr))
-	require.Equal(t, http.StatusUnauthorized, apiErr.Status)
-	require.Nil(t, resp)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 }

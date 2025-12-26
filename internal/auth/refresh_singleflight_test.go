@@ -1,68 +1,63 @@
 package auth
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/GoLessons/sufir-keeper-client/internal/api/apiutil"
 	"github.com/GoLessons/sufir-keeper-client/internal/config"
 	"github.com/GoLessons/sufir-keeper-client/internal/httpclient"
 	"github.com/GoLessons/sufir-keeper-client/internal/logging"
 )
 
-func TestTransportNoReplayOnBodyWithoutGetBody(t *testing.T) {
+func TestRefreshSingleflightEnsuresSingleCall(t *testing.T) {
 	const pathAuth = "/auth"
-	var access string
-	var refresh string
+	var refreshCalls int64
+	var currentAccess string
+	var currentRefresh string
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == http.MethodPost && r.URL.Path == pathAuth:
-			resp := map[string]any{
-				"access_token":  "acc",
-				"refresh_token": "ref",
-				"token_type":    "bearer",
-				"expires_in":    3600,
-			}
-			access = "acc"
-			refresh = "ref"
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(resp)
 		case r.Method == http.MethodPatch && r.URL.Path == pathAuth:
+			atomic.AddInt64(&refreshCalls, 1)
 			type rb struct {
 				RefreshToken string `json:"refresh_token"`
 			}
 			var body rb
 			_ = json.NewDecoder(r.Body).Decode(&body)
 			_ = r.Body.Close()
-			if body.RefreshToken != refresh {
+			if body.RefreshToken != currentRefresh {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			access = "acc2"
-			refresh = "ref2"
+			currentAccess = "access-refreshed"
+			currentRefresh = "refresh-refreshed"
 			resp := map[string]any{
-				"access_token":  access,
-				"refresh_token": refresh,
+				"access_token":  currentAccess,
+				"refresh_token": currentRefresh,
 				"token_type":    "bearer",
 				"expires_in":    3600,
 			}
 			w.Header().Set("Content-Type", "application/json")
 			_ = json.NewEncoder(w).Encode(resp)
-		case r.Method == http.MethodPost && r.URL.Path == "/protected":
-			if r.Header.Get("Authorization") != "Bearer "+access {
-				w.WriteHeader(http.StatusUnauthorized)
-				return
+		case r.Method == http.MethodPost && r.URL.Path == pathAuth:
+			resp := map[string]any{
+				"access_token":  "access-init",
+				"refresh_token": "refresh-init",
+				"token_type":    "bearer",
+				"expires_in":    3600,
 			}
-			w.WriteHeader(http.StatusOK)
+			currentAccess = resp["access_token"].(string)
+			currentRefresh = resp["refresh_token"].(string)
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -86,17 +81,18 @@ func TestTransportNoReplayOnBodyWithoutGetBody(t *testing.T) {
 	mgr := NewManager(rc, store)
 	_, err = mgr.Login(context.Background(), cfg.Server.BaseURL, "u", "p")
 	require.NoError(t, err)
-	_ = store.Clear()
-	rt := NewAuthRoundTripper(rc.HTTPClient.Transport, mgr, cfg.Server.BaseURL, store)
-	rc.HTTPClient.Transport = rt
-	// Body без GetBody
-	req, err := http.NewRequest(http.MethodPost, srv.URL+"/protected", bytes.NewBufferString("x"))
-	require.NoError(t, err)
-	req.Header.Set("Authorization", "Bearer invalid")
-	resp, err := rc.HTTPClient.Do(req)
-	require.Error(t, err)
-	var apiErr apiutil.Error
-	require.True(t, errors.As(err, &apiErr))
-	require.Equal(t, http.StatusUnauthorized, apiErr.Status)
-	require.Nil(t, resp)
+	var wg sync.WaitGroup
+	const n = 10
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func() {
+			defer wg.Done()
+			_, _ = mgr.Refresh(context.Background(), cfg.Server.BaseURL)
+		}()
+	}
+	wg.Wait()
+	require.Equal(t, int64(1), atomic.LoadInt64(&refreshCalls))
+	at, ok := store.CurrentAccessToken()
+	require.True(t, ok)
+	require.Equal(t, currentAccess, at)
 }

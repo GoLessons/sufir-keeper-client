@@ -1,8 +1,5 @@
 package: apigen
-output: internal/apigen/apigen.gen.go
+output: internal/api/apigen/apigen.gen.go
 generate:
-  types: true
-  client: true
-compatibility:
-  # Строгая совместимость без deprecated конструкций
-  check: true
+  - types
+  - client

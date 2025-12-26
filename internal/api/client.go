@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/hashicorp/go-retryablehttp"
 
-	"github.com/GoLessons/sufir-keeper-client/internal/apigen"
+	"github.com/GoLessons/sufir-keeper-client/internal/api/apigen"
 	"github.com/GoLessons/sufir-keeper-client/internal/auth"
 	"github.com/GoLessons/sufir-keeper-client/internal/config"
 	"github.com/GoLessons/sufir-keeper-client/internal/httpclient"

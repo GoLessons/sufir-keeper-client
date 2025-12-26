@@ -10,8 +10,22 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/GoLessons/sufir-keeper-client/internal/apigen"
+	"github.com/GoLessons/sufir-keeper-client/internal/api/apigen"
 )
+
+func DerefStringPointer(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
+}
+
+func DerefIntPointer(v *int) int {
+	if v == nil {
+		return 0
+	}
+	return *v
+}
 
 type Authenticator interface {
 	Register(ctx context.Context, baseURL, login, password string) error
@@ -76,10 +90,10 @@ func (m *Manager) Login(ctx context.Context, baseURL, login, password string) (A
 		return AuthTokens{}, err
 	}
 	tokens := AuthTokens{
-		AccessToken:  ar.AccessToken,
-		RefreshToken: ar.RefreshToken,
-		TokenType:    ar.TokenType,
-		ExpiresIn:    ar.ExpiresIn,
+		AccessToken:  DerefStringPointer(ar.AccessToken),
+		RefreshToken: DerefStringPointer(ar.RefreshToken),
+		TokenType:    DerefStringPointer(ar.TokenType),
+		ExpiresIn:    DerefIntPointer(ar.ExpiresIn),
 	}
 	if err := m.store.SaveTokens(tokens); err != nil {
 		return AuthTokens{}, err
@@ -122,10 +136,10 @@ func (m *Manager) Refresh(ctx context.Context, baseURL string) (AuthTokens, erro
 			return AuthTokens{}, err
 		}
 		newTokens := AuthTokens{
-			AccessToken:  ar.AccessToken,
-			RefreshToken: ar.RefreshToken,
-			TokenType:    ar.TokenType,
-			ExpiresIn:    ar.ExpiresIn,
+			AccessToken:  DerefStringPointer(ar.AccessToken),
+			RefreshToken: DerefStringPointer(ar.RefreshToken),
+			TokenType:    DerefStringPointer(ar.TokenType),
+			ExpiresIn:    DerefIntPointer(ar.ExpiresIn),
 		}
 		if err := m.store.SaveTokens(newTokens); err != nil {
 			return AuthTokens{}, err

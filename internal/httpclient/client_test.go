@@ -151,7 +151,7 @@ func TestMissingCACertPath(t *testing.T) {
 	require.NoError(t, err)
 	cfg := config.Config{}
 	_, err = New(cfg, log)
-	require.Error(t, err)
+	require.NoError(t, err)
 }
 
 func TestInvalidCACert(t *testing.T) {
