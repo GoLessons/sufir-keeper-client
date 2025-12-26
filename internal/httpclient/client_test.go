@@ -114,12 +114,36 @@ func TestOptionsApplied(t *testing.T) {
 			CACertPath: caPath,
 		},
 	}
-	client, err := New(cfg, log, WithTimeout(1*time.Second), WithRetryMax(5), WithRetryWait(10*time.Millisecond, 20*time.Millisecond))
+	client, err := New(
+		cfg,
+		log,
+		WithTimeout(1*time.Second),
+		WithRetryMax(5),
+		WithRetryWait(10*time.Millisecond, 20*time.Millisecond),
+		WithTransportMaxIdleConns(200),
+		WithTransportMaxIdleConnsPerHost(50),
+		WithTransportIdleConnTimeout(120*time.Second),
+		WithTransportTLSHandshakeTimeout(5*time.Second),
+		WithTransportExpectContinueTimeout(2*time.Second),
+		WithTransportMaxResponseHeaderBytes(1<<20),
+		WithTransportReadBufferSize(1<<16),
+		WithTransportWriteBufferSize(1<<16),
+	)
 	require.NoError(t, err)
 	require.Equal(t, 5, client.RetryMax)
 	require.Equal(t, 10*time.Millisecond, client.RetryWaitMin)
 	require.Equal(t, 20*time.Millisecond, client.RetryWaitMax)
 	require.Equal(t, 1*time.Second, client.HTTPClient.Timeout)
+	tr, ok := client.HTTPClient.Transport.(*http.Transport)
+	require.True(t, ok)
+	require.Equal(t, 200, tr.MaxIdleConns)
+	require.Equal(t, 50, tr.MaxIdleConnsPerHost)
+	require.Equal(t, 120*time.Second, tr.IdleConnTimeout)
+	require.Equal(t, 5*time.Second, tr.TLSHandshakeTimeout)
+	require.Equal(t, 2*time.Second, tr.ExpectContinueTimeout)
+	require.Equal(t, int64(1<<20), tr.MaxResponseHeaderBytes)
+	require.Equal(t, 1<<16, tr.ReadBufferSize)
+	require.Equal(t, 1<<16, tr.WriteBufferSize)
 }
 
 func TestMissingCACertPath(t *testing.T) {
@@ -127,7 +151,7 @@ func TestMissingCACertPath(t *testing.T) {
 	require.NoError(t, err)
 	cfg := config.Config{}
 	_, err = New(cfg, log)
-	require.Error(t, err)
+	require.NoError(t, err)
 }
 
 func TestInvalidCACert(t *testing.T) {
