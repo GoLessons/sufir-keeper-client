@@ -1,0 +1,5 @@
+package: apigen
+output: internal/api/apigen/apigen.gen.go
+generate:
+  - types
+  - client
