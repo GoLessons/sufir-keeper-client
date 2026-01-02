@@ -47,6 +47,9 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 			v.SetDefault("auth.token_store_service", "sufir-keeper-client")
 			v.SetDefault("auth.backend", "")
 			v.SetDefault("auth.file_dir", "")
+			v.SetDefault("cache.path", "~/.local/share/sufir-keeper-client/cache.db")
+			v.SetDefault("cache.ttl_minutes", 180)
+			v.SetDefault("cache.enabled", true)
 			var cfg config.Config
 			if err := config.Load(v, &cfg); err != nil {
 				return err
@@ -94,6 +97,11 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 		}
 		cmd.AddCommand(versionCmd)
 	}
+
+	AttachAuthCommands(cmd)
+	AttachItemsCommands(cmd)
+	AttachFilesCommands(cmd)
+	AttachCompletion(cmd)
 
 	return cmd
 }
