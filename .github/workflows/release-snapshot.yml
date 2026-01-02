@@ -40,6 +40,14 @@ jobs:
           args: build --snapshot --clean --config tools/goreleaser.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compute safe artifact name
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          SAFE_REF="$(echo "$REF_NAME" | tr -c 'A-Za-z0-9._-' '-')"
+          echo "ARTIFACT_NAME=snapshot-builds-${SAFE_REF}-${SHA}" >> "$GITHUB_ENV"
       - name: Upload snapshot artifacts
         uses: actions/upload-artifact@v4
         with:
