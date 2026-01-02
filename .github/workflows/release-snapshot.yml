@@ -37,7 +37,7 @@ jobs:
         with:
           distribution: goreleaser
           version: v2.13.1
-          args: build --snapshot --clean --config tools/goreleaser.yml
+          args: release --snapshot --clean --config tools/goreleaser.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Compute safe artifact name
@@ -89,7 +89,10 @@ jobs:
           tag_name: nightly
           prerelease: true
           draft: false
-          files: dist/*
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
           fail_on_unmatched_files: false
           generate_release_notes: false
           target_commitish: ${{ github.sha }}
