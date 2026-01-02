@@ -32,16 +32,24 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			homeDir, err := os.UserHomeDir()
+			executablePath, err := os.Executable()
 			if err != nil {
 				return err
 			}
+			execDir := filepath.Dir(executablePath)
 			if !v.IsSet("config.file") || v.GetString("config.file") == "" {
-				v.Set("config.file", filepath.Join(homeDir, ".config", "keepcli", "config.yaml"))
+				v.Set("config.file", filepath.Join(execDir, "config.json"))
 			}
 			v.SetConfigFile(v.GetString("config.file"))
 			v.SetDefault("server.base_url", "https://localhost:8443/api/v1")
 			v.SetDefault("log.level", "info")
+			v.SetDefault("tls.ca_cert_path", "./var/ca.crt")
+			v.SetDefault("auth.token_store_service", "sufir-keeper-client")
+			v.SetDefault("auth.backend", "")
+			v.SetDefault("auth.file_dir", "")
+			v.SetDefault("cache.path", "~/.local/share/sufir-keeper-client/cache.db")
+			v.SetDefault("cache.ttl_minutes", 180)
+			v.SetDefault("cache.enabled", true)
 			var cfg config.Config
 			if err := config.Load(v, &cfg); err != nil {
 				return err
@@ -73,6 +81,9 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 	_ = v.BindPFlag("server.base_url", cmd.PersistentFlags().Lookup("server"))
 	_ = v.BindPFlag("log.level", cmd.PersistentFlags().Lookup("log-level"))
 	_ = v.BindPFlag("tls.ca_cert_path", cmd.PersistentFlags().Lookup("ca-cert-path"))
+	_ = v.BindEnv("auth.token_store_service", "SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE")
+	_ = v.BindEnv("auth.backend", "SUFIR_KEEPER_AUTH_BACKEND")
+	_ = v.BindEnv("auth.file_dir", "SUFIR_KEEPER_AUTH_FILE_DIR")
 
 	if version != "" || commit != "" || date != "" {
 		versionCmd := &cobra.Command{
@@ -86,6 +97,11 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 		}
 		cmd.AddCommand(versionCmd)
 	}
+
+	AttachAuthCommands(cmd)
+	AttachItemsCommands(cmd)
+	AttachFilesCommands(cmd)
+	AttachCompletion(cmd)
 
 	return cmd
 }
