@@ -32,15 +32,12 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Install cosign
-        run: |
-          sudo apt-get update && sudo apt-get install -y cosign
       - name: Set up Goreleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: v2.13.1
-          args: release --snapshot --clean --config tools/goreleaser.yml
+          args: release --snapshot --clean --skip=sign --config tools/goreleaser.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Compute safe artifact name
