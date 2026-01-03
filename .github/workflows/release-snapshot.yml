@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     concurrency:
       group: snapshot-${{ github.ref }}
       cancel-in-progress: true
@@ -37,6 +38,7 @@ jobs:
           args: release --snapshot --clean --config tools/goreleaser.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COSIGN_EXPERIMENTAL: "true"
       - name: Compute safe artifact name
         shell: bash
         env:
