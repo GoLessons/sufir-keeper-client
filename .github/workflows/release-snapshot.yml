@@ -71,5 +71,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create nightly --prerelease --notes "" || true
-          gh release upload nightly dist/*.tar.gz dist/*.zip dist/checksums.txt dist/checksums.txt.sig --clobber
+          set -e
+          FILES="dist/*.tar.gz dist/*.zip dist/checksums.txt dist/checksums.txt.sig"
+          if gh release view nightly >/dev/null 2>&1; then
+            echo "nightly release exists, attempting to upload with clobber"
+            if gh release upload nightly ${FILES} --clobber; then
+              echo "uploaded assets to mutable nightly"
+              exit 0
+            else
+              echo "failed to upload to nightly, falling back to unique tag"
+            fi
+          else
+            echo "nightly release not found, will create a unique nightly tag"
+          fi
+          TS="$(date -u +%Y%m%d-%H%M)"
+          SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-8)"
+          NIGHTLY_TAG="nightly-${TS}-${SHORT_SHA}"
+          gh release create "${NIGHTLY_TAG}" --title "nightly ${NIGHTLY_TAG}" --prerelease --draft --notes "" --target "${GITHUB_SHA}"
+          gh release upload "${NIGHTLY_TAG}" ${FILES}
+          gh release edit "${NIGHTLY_TAG}" --draft=false
