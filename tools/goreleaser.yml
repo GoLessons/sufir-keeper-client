@@ -55,7 +55,7 @@ release:
     owner: GoLessons
     name: sufir-keeper-client
 
-  draft: false
+  draft: true
   prerelease: auto
 
 changelog:
