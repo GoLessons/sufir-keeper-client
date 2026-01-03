@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+  release:
+    types: [created]
   workflow_dispatch:
 
 jobs:
@@ -28,7 +30,21 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
       - name: Compute release tag
-        run: echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+        env:
+          REL_TAG_RELEASE: ${{ github.event.release.tag_name }}
+          REL_TAG_REF: ${{ github.ref_name }}
+        run: |
+          if [ -n "$REL_TAG_RELEASE" ]; then
+            echo "RELEASE_TAG=$REL_TAG_RELEASE" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_TAG=$REL_TAG_REF" >> "$GITHUB_ENV"
+          fi
+      - name: Create draft release
+        if: github.event_name != 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${RELEASE_TAG}" --draft --notes "" --target "${GITHUB_SHA}" || true
       - name: Release with Goreleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -38,12 +54,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COSIGN_EXPERIMENTAL: "true"
-      - name: Create release with assets (draft)
+      - name: Upload assets to draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${RELEASE_TAG}" dist/*.tar.gz dist/*.zip dist/checksums.txt dist/checksums.txt.sig --draft --notes "" --target "${GITHUB_SHA}"
+          gh release upload "${RELEASE_TAG}" dist/*.tar.gz dist/*.zip dist/checksums.txt dist/checksums.txt.sig --clobber
       - name: Publish draft release
+        if: github.event_name != 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
