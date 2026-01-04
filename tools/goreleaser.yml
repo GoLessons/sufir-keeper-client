@@ -4,9 +4,8 @@ project_name: keepcli
 
 before:
   hooks:
-    - bash -lc "mkdir -p /workspace/var && printf '{}' >/workspace/var/config.yaml"
-    - bash -lc "go mod tidy"
-    - bash -lc 'go test $(go list ./... | grep -v \"internal/cli\")'
+    - go mod tidy
+    - go test ./...
 
 builds:
   - id: keepcli
