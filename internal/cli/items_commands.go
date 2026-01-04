@@ -3,8 +3,11 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
+	"text/tabwriter"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -72,13 +75,29 @@ func newItemsListCmd() *cobra.Command {
 				return err
 			}
 			if resp.JSON200 != nil && resp.JSON200.Items != nil {
+				tw := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+				_, _ = fmt.Fprintln(tw, "ID\tTitle\tCreatedAt\tUpdatedAt\tMeta")
 				for _, it := range *resp.JSON200.Items {
-					title := ""
-					if it.Title != nil {
-						title = *it.Title
+					idText := ""
+					if it.Id != nil {
+						idText = it.Id.String()
 					}
-					_, _ = fmt.Fprintf(cmd.OutOrStdout(), "%s\n", title)
+					titleText := ""
+					if it.Title != nil {
+						titleText = *it.Title
+					}
+					createdAtText := ""
+					if it.CreatedAt != nil {
+						createdAtText = it.CreatedAt.Format(time.RFC3339)
+					}
+					updatedAtText := ""
+					if it.UpdatedAt != nil {
+						updatedAtText = it.UpdatedAt.Format(time.RFC3339)
+					}
+					metaText := formatMeta(it.Meta)
+					_, _ = fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", idText, titleText, createdAtText, updatedAtText, metaText)
 				}
+				_ = tw.Flush()
 			}
 			return nil
 		},
@@ -126,8 +145,50 @@ func newItemsGetCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if resp.JSON200 != nil && resp.JSON200.Title != nil {
-				_, _ = fmt.Fprintf(cmd.OutOrStdout(), "%s\n", *resp.JSON200.Title)
+			if resp.JSON200 != nil {
+				tw := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+				idText := ""
+				if resp.JSON200.Id != nil {
+					idText = resp.JSON200.Id.String()
+				}
+				titleText := ""
+				if resp.JSON200.Title != nil {
+					titleText = *resp.JSON200.Title
+				}
+				typeText, dataFields := detectItemTypeAndFields(resp.JSON200.Data)
+				metaText := formatMeta(resp.JSON200.Meta)
+				createdAtText := ""
+				if resp.JSON200.CreatedAt != nil {
+					createdAtText = resp.JSON200.CreatedAt.Format(time.RFC3339)
+				}
+				updatedAtText := ""
+				if resp.JSON200.UpdatedAt != nil {
+					updatedAtText = resp.JSON200.UpdatedAt.Format(time.RFC3339)
+				}
+				userIdText := ""
+				if resp.JSON200.UserId != nil {
+					userIdText = resp.JSON200.UserId.String()
+				}
+				_, _ = fmt.Fprintln(tw, "Field\tValue")
+				_, _ = fmt.Fprintf(tw, "Id\t%s\n", idText)
+				_, _ = fmt.Fprintf(tw, "Title\t%s\n", titleText)
+				_, _ = fmt.Fprintf(tw, "Type\t%s\n", typeText)
+				if dataFields != nil {
+					var dfKeys []string
+					for k := range dataFields {
+						dfKeys = append(dfKeys, k)
+					}
+					sort.Strings(dfKeys)
+					for _, k := range dfKeys {
+						v := dataFields[k]
+						_, _ = fmt.Fprintf(tw, "%s\t%s\n", k, v)
+					}
+				}
+				_, _ = fmt.Fprintf(tw, "UserId\t%s\n", userIdText)
+				_, _ = fmt.Fprintf(tw, "Meta\t%s\n", metaText)
+				_, _ = fmt.Fprintf(tw, "CreatedAt\t%s\n", createdAtText)
+				_, _ = fmt.Fprintf(tw, "UpdatedAt\t%s\n", updatedAtText)
+				_ = tw.Flush()
 			}
 			return nil
 		},
@@ -480,4 +541,51 @@ func parseMeta(s string) map[string]string {
 		}
 	}
 	return res
+}
+
+func formatMeta(meta *map[string]string) string {
+	if meta == nil {
+		return ""
+	}
+	if len(*meta) == 0 {
+		return ""
+	}
+	var parts []string
+	var keys []string
+	for k := range *meta {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := (*meta)[k]
+		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
+	}
+	return strings.Join(parts, ",")
+}
+
+func detectItemTypeAndFields(data *apigen.ItemResponse_Data) (string, map[string]string) {
+	if data == nil {
+		return "", nil
+	}
+	if v, err := data.AsTextData(); err == nil && string(v.Type) == "TEXT" {
+		return "TEXT", map[string]string{"value": v.Value}
+	}
+	if v, err := data.AsCredentialData(); err == nil && string(v.Type) == "CREDENTIAL" {
+		return "CREDENTIAL", map[string]string{"login": v.Login, "password": v.Password}
+	}
+	if v, err := data.AsCardData(); err == nil && string(v.Type) == "CARD" {
+		return "CARD", map[string]string{
+			"card_holder": v.CardHolder,
+			"card_number": v.CardNumber,
+			"expiry_date": v.ExpiryDate,
+			"cvv":         v.Cvv,
+		}
+	}
+	if v, err := data.AsBinaryData(); err == nil && string(v.Type) == "BINARY" {
+		return "BINARY", map[string]string{
+			"filename": v.Filename,
+			"id":       v.Id.String(),
+		}
+	}
+	return "", nil
 }

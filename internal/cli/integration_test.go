@@ -20,12 +20,16 @@ func TestCLI_ItemsList_And_FilesDownload(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	var buf bytes.Buffer
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "list"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "list"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +43,7 @@ func TestCLI_ItemsList_And_FilesDownload(t *testing.T) {
 	cmd = NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "download", "00000000-0000-0000-0000-000000000001", outPath})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "download", "00000000-0000-0000-0000-000000000001", outPath})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -55,12 +59,16 @@ func TestCLI_ItemsListWithFlags(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	var buf bytes.Buffer
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
 	cmd.SetArgs([]string{
-		"--config", filepath.Join(dir, "cfg.json"),
+		"--config", cfgPath,
 		"--server", srv.URL, "--ca-cert-path=",
 		"list", "--type", "TEXT", "--search", "t", "--limit", "10", "--offset", "1",
 	})
@@ -80,11 +88,15 @@ func TestCLI_ItemsCreateUpdateDelete(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "login", "--login", "u", "--password", "p"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "login", "--login", "u", "--password", "p"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +104,7 @@ func TestCLI_ItemsCreateUpdateDelete(t *testing.T) {
 	cmd = NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "create", "--title", "t", "--value", "v"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "create", "--title", "t", "--value", "v"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +112,7 @@ func TestCLI_ItemsCreateUpdateDelete(t *testing.T) {
 	cmd = NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "update", "00000000-0000-0000-0000-000000000001", "--title", "t2"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "update", "00000000-0000-0000-0000-000000000001", "--title", "t2"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +120,7 @@ func TestCLI_ItemsCreateUpdateDelete(t *testing.T) {
 	cmd = NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "delete", "00000000-0000-0000-0000-000000000001"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "delete", "00000000-0000-0000-0000-000000000001"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -130,11 +142,15 @@ func TestCLI_ItemsCreateUnauthorized(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "create", "--title", "t", "--type", "TEXT", "--value", "v"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "create", "--title", "t", "--type", "TEXT", "--value", "v"})
 	err := cmd.ExecuteContext(context.Background())
 	if err == nil {
 		t.Fatal("expected unauthorized error")
@@ -157,11 +173,15 @@ func TestCLI_ItemsUpdateUnauthorized(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "update", "00000000-0000-0000-0000-000000000001", "--type", "TEXT", "--value", "v"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "update", "00000000-0000-0000-0000-000000000001", "--type", "TEXT", "--value", "v"})
 	err := cmd.ExecuteContext(context.Background())
 	if err == nil {
 		t.Fatal("expected unauthorized error")
@@ -184,11 +204,15 @@ func TestCLI_ItemsDeleteUnauthorized(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "delete", "00000000-0000-0000-0000-000000000001"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "delete", "00000000-0000-0000-0000-000000000001"})
 	err := cmd.ExecuteContext(context.Background())
 	if err == nil {
 		t.Fatal("expected unauthorized error")
@@ -202,11 +226,15 @@ func TestCLI_UpdateTextWithMeta(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "update", "00000000-0000-0000-0000-000000000001", "--type", "TEXT", "--value", "v", "--meta", "k=v"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "update", "00000000-0000-0000-0000-000000000001", "--type", "TEXT", "--value", "v", "--meta", "k=v"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -219,11 +247,15 @@ func TestCLI_ItemsGet(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "get", "00000000-0000-0000-0000-000000000001"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "get", "00000000-0000-0000-0000-000000000001"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -245,11 +277,15 @@ func TestCLI_ItemsGetUnauthorized(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "get", "00000000-0000-0000-0000-000000000001"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "get", "00000000-0000-0000-0000-000000000001"})
 	err := cmd.ExecuteContext(context.Background())
 	if err == nil {
 		t.Fatal("expected unauthorized error")
@@ -263,6 +299,10 @@ func TestCLI_FilesUpload(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	fp := filepath.Join(dir, "f.txt")
 	if err := os.WriteFile(fp, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
@@ -271,7 +311,7 @@ func TestCLI_FilesUpload(t *testing.T) {
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "upload", "--path", fp})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "upload", "--path", fp})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -290,11 +330,15 @@ func TestCLI_DownloadUnauthorized(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "download", "00000000-0000-0000-0000-000000000001", filepath.Join(dir, "out.bin")})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "download", "00000000-0000-0000-0000-000000000001", filepath.Join(dir, "out.bin")})
 	err := cmd.ExecuteContext(context.Background())
 	if err == nil {
 		t.Fatal("expected unauthorized error")
@@ -329,11 +373,15 @@ func TestCLI_UploadError(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "upload", "--path", fp})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "upload", "--path", fp})
 	err := cmd.ExecuteContext(context.Background())
 	if err == nil {
 		t.Fatal("expected upload error")
@@ -424,11 +472,15 @@ func TestCLI_AuthLoginStatusLogout(t *testing.T) {
 	t.Setenv("SUFIR_KEEPER_AUTH_BACKEND", "file")
 	t.Setenv("SUFIR_KEEPER_AUTH_FILE_DIR", dir)
 	t.Setenv("SUFIR_KEEPER_AUTH_TOKEN_STORE_SERVICE", "sufir-keeper-client")
+	cfgPath := filepath.Join(dir, "cfg.json")
+	if err := os.WriteFile(cfgPath, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 	cmd := NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "login", "--login", "u", "--password", "p"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "login", "--login", "u", "--password", "p"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -436,7 +488,7 @@ func TestCLI_AuthLoginStatusLogout(t *testing.T) {
 	cmd = NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "status"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "status"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -447,7 +499,7 @@ func TestCLI_AuthLoginStatusLogout(t *testing.T) {
 	cmd = NewRootCmd("dev", "none", time.Now().Format(time.RFC3339))
 	cmd.SetOut(&buf)
 	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--config", filepath.Join(dir, "cfg.json"), "--server", srv.URL, "--ca-cert-path=", "logout"})
+	cmd.SetArgs([]string{"--config", cfgPath, "--server", srv.URL, "--ca-cert-path=", "logout"})
 	if err := cmd.ExecuteContext(context.Background()); err != nil {
 		t.Fatal(err)
 	}

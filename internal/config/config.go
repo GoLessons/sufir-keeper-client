@@ -70,7 +70,6 @@ func Load(v Reader, out *Config) error {
 	_ = v.BindEnv("cache.path", "SUFIR_KEEPER_CACHE_PATH")
 	_ = v.BindEnv("cache.ttl_minutes", "SUFIR_KEEPER_CACHE_TTL")
 	_ = v.BindEnv("cache.enabled", "SUFIR_KEEPER_CACHE_ENABLED")
-	_ = v.ReadInConfig()
 	out.ConfigFile = v.GetString("config.file")
 	out.Server.BaseURL = v.GetString("server.base_url")
 	out.TLS.CACertPath = v.GetString("tls.ca_cert_path")
@@ -83,6 +82,15 @@ func Load(v Reader, out *Config) error {
 	out.Cache.Enabled = v.GetString("cache.enabled") == "true"
 	if out.ConfigFile == "" {
 		out.ConfigFile = os.Getenv("SUFIR_KEEPER_CONFIG")
+	}
+	if out.ConfigFile != "" {
+		v.SetConfigFile(out.ConfigFile)
+		if _, err := os.Stat(out.ConfigFile); err != nil {
+			return errors.New("config file not found: " + out.ConfigFile)
+		}
+		if err := v.ReadInConfig(); err != nil {
+			return err
+		}
 	}
 	if out.Server.BaseURL == "" {
 		out.Server.BaseURL = os.Getenv("SUFIR_KEEPER_SERVER")
