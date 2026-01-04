@@ -41,12 +41,17 @@ archives:
     formats:
       - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    wrap_in_directory: false
+    strip_binary_directory: true
     format_overrides:
       - goos: windows
         formats:
           - zip
     files:
-      - cmd/keepcli/config.json
+      - src: cmd/keepcli/config.json
+        dst: config.json
+      - src: README.md
+        dst: README.md
 
 checksum:
   name_template: checksums.txt
