@@ -46,7 +46,9 @@ archives:
         formats:
           - zip
     files:
-      - cmd/keepcli/config.json
+      - src: cmd/keepcli/config.json
+        strip_parent: true
+      - README.md
 
 checksum:
   name_template: checksums.txt
