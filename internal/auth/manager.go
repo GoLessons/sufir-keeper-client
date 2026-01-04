@@ -5,12 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/GoLessons/sufir-keeper-client/internal/api/apigen"
+	"github.com/GoLessons/sufir-keeper-client/internal/api/apiutil"
 )
 
 func DerefStringPointer(v *string) string {
@@ -60,8 +63,9 @@ func (m *Manager) Register(ctx context.Context, baseURL, login, password string)
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return errors.New("register failed")
+		return normalizeAPIError(resp)
 	}
 	return nil
 }
@@ -82,7 +86,8 @@ func (m *Manager) Login(ctx context.Context, baseURL, login, password string) (A
 		return AuthTokens{}, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return AuthTokens{}, errors.New("login failed")
+		defer resp.Body.Close()
+		return AuthTokens{}, normalizeAPIError(resp)
 	}
 	defer resp.Body.Close()
 	var ar apigen.AuthResponse
@@ -128,7 +133,8 @@ func (m *Manager) Refresh(ctx context.Context, baseURL string) (AuthTokens, erro
 			return AuthTokens{}, err
 		}
 		if resp.StatusCode != http.StatusOK {
-			return AuthTokens{}, errors.New("refresh failed")
+			defer resp.Body.Close()
+			return AuthTokens{}, normalizeAPIError(resp)
 		}
 		defer resp.Body.Close()
 		var ar apigen.AuthResponse
@@ -179,11 +185,38 @@ func (m *Manager) Verify(ctx context.Context, baseURL string) (UserInfo, error) 
 		return UserInfo{}, err
 	}
 	if resp.StatusCode != http.StatusNoContent {
-		return UserInfo{}, errors.New("verify failed")
+		defer resp.Body.Close()
+		return UserInfo{}, normalizeAPIError(resp)
 	}
 	userID := resp.Header.Get("X-User-Id")
 	if userID == "" {
 		return UserInfo{}, errors.New("no user id")
 	}
 	return UserInfo{UserID: userID}, nil
+}
+
+func normalizeAPIError(resp *http.Response) error {
+	status := resp.StatusCode
+	var serverErr apigen.Error
+	var body []byte
+	if resp.Body != nil {
+		b, _ := io.ReadAll(resp.Body)
+		body = b
+	}
+	var msg string
+	if len(body) > 0 && strings.Contains(resp.Header.Get("Content-Type"), "json") {
+		if json.Unmarshal(body, &serverErr) == nil {
+			if serverErr.Message != nil && *serverErr.Message != "" {
+				msg = *serverErr.Message
+			}
+		}
+	}
+	if msg == "" {
+		if status > 0 {
+			msg = http.StatusText(status)
+		} else {
+			msg = "request failed"
+		}
+	}
+	return apiutil.Error{Status: status, Message: msg}
 }

@@ -30,7 +30,7 @@ func NewRootCmd(version, commit, date string) *cobra.Command {
 		Use:           "keepcli",
 		Short:         "Sufir Keeper CLI",
 		SilenceUsage:  true,
-		SilenceErrors: true,
+		SilenceErrors: false,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			executablePath, err := os.Executable()
 			if err != nil {

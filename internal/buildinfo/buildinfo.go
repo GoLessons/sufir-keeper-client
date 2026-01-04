@@ -27,7 +27,6 @@ func Validate() error {
 
 func Ensure() {
 	if err := Validate(); err != nil {
-		os.Stderr.WriteString("build metadata error: " + err.Error() + "\n")
-		os.Exit(2)
+		os.Stderr.WriteString("build metadata warning: " + err.Error() + "\n")
 	}
 }
