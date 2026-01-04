@@ -11,8 +11,6 @@ builds:
   - id: keepcli
     main: ./cmd/keepcli
     binary: keepcli
-    extra_files:
-      - cmd/keepcli/config.json
 
     env:
       - CGO_ENABLED=0
@@ -47,7 +45,8 @@ archives:
       - goos: windows
         formats:
           - zip
-    files: []
+    files:
+      - cmd/keepcli/config.json
 
 checksum:
   name_template: checksums.txt

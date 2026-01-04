@@ -21,6 +21,13 @@ import (
 	"github.com/GoLessons/sufir-keeper-client/internal/service"
 )
 
+const (
+	ItemTypeText       = "TEXT"
+	ItemTypeCredential = "CREDENTIAL"
+	ItemTypeCard       = "CARD"
+	ItemTypeBinary     = "BINARY"
+)
+
 func AttachItemsCommands(root *cobra.Command) {
 	root.AddCommand(newItemsListCmd())
 	root.AddCommand(newItemsGetCmd())
@@ -165,9 +172,9 @@ func newItemsGetCmd() *cobra.Command {
 				if resp.JSON200.UpdatedAt != nil {
 					updatedAtText = resp.JSON200.UpdatedAt.Format(time.RFC3339)
 				}
-				userIdText := ""
+				userIDText := ""
 				if resp.JSON200.UserId != nil {
-					userIdText = resp.JSON200.UserId.String()
+					userIDText = resp.JSON200.UserId.String()
 				}
 				_, _ = fmt.Fprintln(tw, "Field\tValue")
 				_, _ = fmt.Fprintf(tw, "Id\t%s\n", idText)
@@ -184,7 +191,7 @@ func newItemsGetCmd() *cobra.Command {
 						_, _ = fmt.Fprintf(tw, "%s\t%s\n", k, v)
 					}
 				}
-				_, _ = fmt.Fprintf(tw, "UserId\t%s\n", userIdText)
+				_, _ = fmt.Fprintf(tw, "UserId\t%s\n", userIDText)
 				_, _ = fmt.Fprintf(tw, "Meta\t%s\n", metaText)
 				_, _ = fmt.Fprintf(tw, "CreatedAt\t%s\n", createdAtText)
 				_, _ = fmt.Fprintf(tw, "UpdatedAt\t%s\n", updatedAtText)
@@ -208,24 +215,24 @@ func newItemsCreateCmd() *cobra.Command {
 			ttype = strings.ToUpper(strings.TrimSpace(ttype))
 			var data apigen.ItemCreate_Data
 			switch ttype {
-			case "TEXT", "":
+			case ItemTypeText, "":
 				value, _ := cmd.Flags().GetString("value")
 				if strings.TrimSpace(value) == "" {
 					return errors.New("требуется value для TEXT")
 				}
-				if err := data.FromTextData(apigen.TextData{Type: "TEXT", Value: value}); err != nil {
+				if err := data.FromTextData(apigen.TextData{Type: ItemTypeText, Value: value}); err != nil {
 					return err
 				}
-			case "CREDENTIAL":
+			case ItemTypeCredential:
 				login, _ := cmd.Flags().GetString("login")
 				password, _ := cmd.Flags().GetString("password")
 				if strings.TrimSpace(login) == "" || strings.TrimSpace(password) == "" {
 					return errors.New("требуются login и password для CREDENTIAL")
 				}
-				if err := data.FromCredentialData(apigen.CredentialData{Type: "CREDENTIAL", Login: login, Password: password}); err != nil {
+				if err := data.FromCredentialData(apigen.CredentialData{Type: ItemTypeCredential, Login: login, Password: password}); err != nil {
 					return err
 				}
-			case "CARD":
+			case ItemTypeCard:
 				cardNumber, _ := cmd.Flags().GetString("card-number")
 				cardHolder, _ := cmd.Flags().GetString("card-holder")
 				expiryDate, _ := cmd.Flags().GetString("expiry-date")
@@ -233,10 +240,10 @@ func newItemsCreateCmd() *cobra.Command {
 				if strings.TrimSpace(cardNumber) == "" || strings.TrimSpace(cardHolder) == "" || strings.TrimSpace(expiryDate) == "" || strings.TrimSpace(cvv) == "" {
 					return errors.New("требуются card-number, card-holder, expiry-date, cvv для CARD")
 				}
-				if err := data.FromCardData(apigen.CardData{Type: "CARD", CardNumber: cardNumber, CardHolder: cardHolder, ExpiryDate: expiryDate, Cvv: cvv}); err != nil {
+				if err := data.FromCardData(apigen.CardData{Type: ItemTypeCard, CardNumber: cardNumber, CardHolder: cardHolder, ExpiryDate: expiryDate, Cvv: cvv}); err != nil {
 					return err
 				}
-			case "BINARY":
+			case ItemTypeBinary:
 				filename, _ := cmd.Flags().GetString("filename")
 				bid, _ := cmd.Flags().GetString("binary-id")
 				if strings.TrimSpace(filename) == "" || strings.TrimSpace(bid) == "" {
@@ -246,7 +253,7 @@ func newItemsCreateCmd() *cobra.Command {
 				if err != nil {
 					return errors.New("некорректный UUID в binary-id")
 				}
-				if err := data.FromBinaryData(apigen.BinaryData{Type: "BINARY", Filename: filename, Id: u}); err != nil {
+				if err := data.FromBinaryData(apigen.BinaryData{Type: ItemTypeBinary, Filename: filename, Id: u}); err != nil {
 					return err
 				}
 			default:
@@ -291,7 +298,7 @@ func newItemsCreateCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().String("title", "", "Заголовок")
-	cmd.Flags().String("type", "TEXT", "Тип: TEXT|CREDENTIAL|CARD|BINARY")
+	cmd.Flags().String("type", ItemTypeText, "Тип: TEXT|CREDENTIAL|CARD|BINARY")
 	cmd.Flags().String("value", "", "Значение для TEXT")
 	cmd.Flags().String("login", "", "Логин для CREDENTIAL")
 	cmd.Flags().String("password", "", "Пароль для CREDENTIAL")
@@ -328,28 +335,28 @@ func newItemsUpdateCmd() *cobra.Command {
 				if ttype != "" {
 					var d apigen.ItemUpdate_Data
 					switch ttype {
-					case "TEXT":
+					case ItemTypeText:
 						if strings.TrimSpace(value) == "" {
 							return errors.New("требуется value для TEXT")
 						}
-						if err := d.UnmarshalJSON([]byte(fmt.Sprintf(`{"type":"TEXT","value":%q}`, value))); err != nil {
+						if err := d.UnmarshalJSON([]byte(fmt.Sprintf(`{"type":"%s","value":%q}`, ItemTypeText, value))); err != nil {
 							return err
 						}
 						u.Data = &d
-					case "CREDENTIAL":
+					case ItemTypeCredential:
 						login, _ := cmd.Flags().GetString("login")
 						password, _ := cmd.Flags().GetString("password")
 						if strings.TrimSpace(login) == "" && strings.TrimSpace(password) == "" {
 							return errors.New("нужно указать хотя бы один из login|password для CREDENTIAL")
 						}
-						obj := map[string]string{"type": "CREDENTIAL"}
+						obj := map[string]string{"type": ItemTypeCredential}
 						if strings.TrimSpace(login) != "" {
 							obj["login"] = login
 						}
 						if strings.TrimSpace(password) != "" {
 							obj["password"] = password
 						}
-						b := []byte(fmt.Sprintf(`{"type":"CREDENTIAL"%s%s}`,
+						b := []byte(fmt.Sprintf(`{"type":"%s"%s%s}`, ItemTypeCredential,
 							func() string {
 								if strings.TrimSpace(login) != "" {
 									return fmt.Sprintf(`,"login":%q`, login)
@@ -367,7 +374,7 @@ func newItemsUpdateCmd() *cobra.Command {
 							return err
 						}
 						u.Data = &d
-					case "CARD":
+					case ItemTypeCard:
 						cardNumber, _ := cmd.Flags().GetString("card-number")
 						cardHolder, _ := cmd.Flags().GetString("card-holder")
 						expiryDate, _ := cmd.Flags().GetString("expiry-date")
@@ -375,7 +382,7 @@ func newItemsUpdateCmd() *cobra.Command {
 						if strings.TrimSpace(cardNumber) == "" && strings.TrimSpace(cardHolder) == "" && strings.TrimSpace(expiryDate) == "" && strings.TrimSpace(cvv) == "" {
 							return errors.New("нужно указать хотя бы одно из card-number|card-holder|expiry-date|cvv для CARD")
 						}
-						payload := `{"type":"CARD"}`
+						payload := fmt.Sprintf(`{"type":"%s"}`, ItemTypeCard)
 						if strings.TrimSpace(cardNumber) != "" {
 							payload = payload[:len(payload)-1] + fmt.Sprintf(`,"card_number":%q}`, cardNumber)
 						}
@@ -383,28 +390,28 @@ func newItemsUpdateCmd() *cobra.Command {
 							if payload[len(payload)-1] == '}' {
 								payload = payload[:len(payload)-1] + fmt.Sprintf(`,"card_holder":%q}`, cardHolder)
 							} else {
-								payload = fmt.Sprintf(`{"type":"CARD","card_holder":%q}`, cardHolder)
+								payload = fmt.Sprintf(`{"type":"%s","card_holder":%q}`, ItemTypeCard, cardHolder)
 							}
 						}
 						if strings.TrimSpace(expiryDate) != "" {
 							if payload[len(payload)-1] == '}' {
 								payload = payload[:len(payload)-1] + fmt.Sprintf(`,"expiry_date":%q}`, expiryDate)
 							} else {
-								payload = fmt.Sprintf(`{"type":"CARD","expiry_date":%q}`, expiryDate)
+								payload = fmt.Sprintf(`{"type":"%s","expiry_date":%q}`, ItemTypeCard, expiryDate)
 							}
 						}
 						if strings.TrimSpace(cvv) != "" {
 							if payload[len(payload)-1] == '}' {
 								payload = payload[:len(payload)-1] + fmt.Sprintf(`,"cvv":%q}`, cvv)
 							} else {
-								payload = fmt.Sprintf(`{"type":"CARD","cvv":%q}`, cvv)
+								payload = fmt.Sprintf(`{"type":"%s","cvv":%q}`, ItemTypeCard, cvv)
 							}
 						}
 						if err := d.UnmarshalJSON([]byte(payload)); err != nil {
 							return err
 						}
 						u.Data = &d
-					case "BINARY":
+					case ItemTypeBinary:
 						filename, _ := cmd.Flags().GetString("filename")
 						bid, _ := cmd.Flags().GetString("binary-id")
 						var parts []string
@@ -420,7 +427,7 @@ func newItemsUpdateCmd() *cobra.Command {
 						if len(parts) == 0 {
 							return errors.New("нужно указать filename или binary-id для BINARY")
 						}
-						payload := fmt.Sprintf(`{"type":"BINARY",%s}`, strings.Join(parts, ","))
+						payload := fmt.Sprintf(`{"type":"%s",%s}`, ItemTypeBinary, strings.Join(parts, ","))
 						var d apigen.ItemUpdate_Data
 						if err := d.UnmarshalJSON([]byte(payload)); err != nil {
 							return err
@@ -550,8 +557,9 @@ func formatMeta(meta *map[string]string) string {
 	if len(*meta) == 0 {
 		return ""
 	}
-	var parts []string
-	var keys []string
+	n := len(*meta)
+	var parts = make([]string, 0, n)
+	var keys = make([]string, 0, n)
 	for k := range *meta {
 		keys = append(keys, k)
 	}
@@ -567,22 +575,22 @@ func detectItemTypeAndFields(data *apigen.ItemResponse_Data) (string, map[string
 	if data == nil {
 		return "", nil
 	}
-	if v, err := data.AsTextData(); err == nil && string(v.Type) == "TEXT" {
-		return "TEXT", map[string]string{"value": v.Value}
+	if v, err := data.AsTextData(); err == nil && string(v.Type) == ItemTypeText {
+		return ItemTypeText, map[string]string{"value": v.Value}
 	}
-	if v, err := data.AsCredentialData(); err == nil && string(v.Type) == "CREDENTIAL" {
-		return "CREDENTIAL", map[string]string{"login": v.Login, "password": v.Password}
+	if v, err := data.AsCredentialData(); err == nil && string(v.Type) == ItemTypeCredential {
+		return ItemTypeCredential, map[string]string{"login": v.Login, "password": v.Password}
 	}
-	if v, err := data.AsCardData(); err == nil && string(v.Type) == "CARD" {
-		return "CARD", map[string]string{
+	if v, err := data.AsCardData(); err == nil && string(v.Type) == ItemTypeCard {
+		return ItemTypeCard, map[string]string{
 			"card_holder": v.CardHolder,
 			"card_number": v.CardNumber,
 			"expiry_date": v.ExpiryDate,
 			"cvv":         v.Cvv,
 		}
 	}
-	if v, err := data.AsBinaryData(); err == nil && string(v.Type) == "BINARY" {
-		return "BINARY", map[string]string{
+	if v, err := data.AsBinaryData(); err == nil && string(v.Type) == ItemTypeBinary {
+		return ItemTypeBinary, map[string]string{
 			"filename": v.Filename,
 			"id":       v.Id.String(),
 		}
