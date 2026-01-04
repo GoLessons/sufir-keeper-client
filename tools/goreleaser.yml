@@ -45,7 +45,8 @@ archives:
       - goos: windows
         formats:
           - zip
-    files: []
+    files:
+      - cmd/keepcli/config.json
 
 checksum:
   name_template: checksums.txt
