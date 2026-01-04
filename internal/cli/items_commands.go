@@ -558,8 +558,8 @@ func formatMeta(meta *map[string]string) string {
 		return ""
 	}
 	n := len(*meta)
-	var parts = make([]string, 0, n)
-	var keys = make([]string, 0, n)
+	parts := make([]string, 0, n)
+	keys := make([]string, 0, n)
 	for k := range *meta {
 		keys = append(keys, k)
 	}

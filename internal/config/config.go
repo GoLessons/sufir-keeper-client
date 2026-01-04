@@ -85,11 +85,10 @@ func Load(v Reader, out *Config) error {
 	}
 	if out.ConfigFile != "" {
 		v.SetConfigFile(out.ConfigFile)
-		if _, err := os.Stat(out.ConfigFile); err != nil {
-			return errors.New("config file not found: " + out.ConfigFile)
-		}
-		if err := v.ReadInConfig(); err != nil {
-			return err
+		if _, err := os.Stat(out.ConfigFile); err == nil {
+			if err := v.ReadInConfig(); err != nil {
+				return err
+			}
 		}
 	}
 	if out.Server.BaseURL == "" {
